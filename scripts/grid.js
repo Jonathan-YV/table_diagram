@@ -1,6 +1,9 @@
-export function createTableDiagram2(data) {
+export function createTableDiagram2(data, direccion, inLevel) {
   const COLOR = {
     ASO: "red",
+    ASOS: "red",
+    SMC: "blue",
+    SMCS: "blue",
     Library: "blue",
     DTO: "green",
     Method: "purple",
@@ -16,11 +19,11 @@ export function createTableDiagram2(data) {
     Utility: "black",
   };
 
-  const GROUP = ['GL', 'GM', 'GD', 'G' , 'IN', 'OUT', 'Utility']
+  const GROUP = ['GL', 'GM', 'GD', 'G' , 'IN', 'OUT', 'Utility', 'ASOS', 'SMCS']
 
   const level = getLevel(data);
-  const data_ = flattenData(data);
-  //console.log(data_);
+  const data_ = flattenData(data,0, inLevel * 2);
+  console.log(data_);
 
   // Calcular la longitud de la palabra más larga en cada columna
   let maxWordLengths = Array(level).fill(0);
@@ -62,10 +65,17 @@ export function createTableDiagram2(data) {
       } else if (data_[i] && data_[i].level === j + 1) {
         color = COLOR[data_[i].type] || "";
         console.log(color);
-        // Insertar SVG de línea con longitud igual a la de la palabra más larga en la columna
-        val = `<svg height="20" width="100%" style="width:100%;">
+        if (direccion) {
+          // Insertar SVG de línea con longitud igual a la de la palabra más larga en la columna
+          val = `<svg height="20" width="100%" style="width:100%;">
                 <path d="M8,0 L8,10 L50,10 L50,5 L60,10 L50,15 L50,10 L8,10 Z" fill="grey" stroke="grey" stroke-width="2" />
               </svg>`;
+        } else {
+          val = `<svg height="20" width="100%" style="width:100%;">
+                <path d="M8,1 L8,12 L60,12 L8,12 L8,8 L2,8 L8,1 L14,8 L3,8" fill="grey" stroke="grey" stroke-width="2" />
+              </svg>`;
+        }
+
       } else if (data_[i].level > j) {
         
         
@@ -179,19 +189,23 @@ function getLevel(data, level = 1) {
   return maxLevel;
 }
 
-function flattenData(data, level = 0) {
-  let result = [{
-    id: data.id,
-    name: data.name,
-    type: data.type,
-    level,
-    hasDependencies: data.dependencies && data.dependencies.length > 0
-  }];
+function flattenData(data, level = 0, inLevel) {
+  let result = [];
 
-  if (data.dependencies) {
-    data.dependencies.forEach((dependencie) => {
-      result = result.concat(flattenData(dependencie, level + 1));
+  if (inLevel === 0 || level <= inLevel) {
+    result.push({
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      level,
+      hasDependencies: data.dependencies && data.dependencies.length > 0
     });
+
+    if (data.dependencies) {
+      data.dependencies.forEach((dependencie) => {
+        result = result.concat(flattenData(dependencie, level + 1, inLevel));
+      });
+    }
   }
 
   return result;
